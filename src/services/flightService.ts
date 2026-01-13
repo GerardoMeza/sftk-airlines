@@ -1,99 +1,117 @@
 import { Flight, FlightSearchParams } from "@/types";
-
-// Mock data for demonstration
-const mockFlights: Flight[] = [
-  {
-    id: "flight-1",
-    flightNumber: "SFTK001",
-    departureAirport: "MEX",
-    arrivalAirport: "MIA",
-    departureTime: new Date(Date.now() + 86400000).toISOString(), // Tomorrow
-    arrivalTime: new Date(Date.now() + 86400000 + 14400000).toISOString(), // Tomorrow + 4 hours
-    airline: "SFTK Airlines",
-    stops: 0,
-    availableSeats: 150,
-    price: 320,
-  },
-  {
-    id: "flight-2",
-    flightNumber: "SFTK015",
-    departureAirport: "MEX",
-    arrivalAirport: "MIA",
-    departureTime: new Date(Date.now() + 86400000 + 7200000).toISOString(),
-    arrivalTime: new Date(Date.now() + 86400000 + 21600000).toISOString(),
-    airline: "SFTK Airlines",
-    stops: 0,
-    availableSeats: 89,
-    price: 380,
-  },
-  {
-    id: "flight-3",
-    flightNumber: "SFTK028",
-    departureAirport: "MEX",
-    arrivalAirport: "MIA",
-    departureTime: new Date(Date.now() + 86400000 + 14400000).toISOString(),
-    arrivalTime: new Date(Date.now() + 86400000 + 25200000).toISOString(),
-    airline: "SFTK Airlines",
-    stops: 1,
-    availableSeats: 120,
-    price: 280,
-  },
-  {
-    id: "flight-4",
-    flightNumber: "SFTK042",
-    departureAirport: "MEX",
-    arrivalAirport: "MIA",
-    departureTime: new Date(Date.now() + 172800000).toISOString(), // Day after tomorrow
-    arrivalTime: new Date(Date.now() + 172800000 + 14400000).toISOString(),
-    airline: "SFTK Airlines",
-    stops: 0,
-    availableSeats: 160,
-    price: 350,
-  },
-];
+import { prisma } from "@/lib/prisma";
 
 export async function searchFlights(
   params: FlightSearchParams
 ): Promise<Flight[]> {
-  // Simulate API call delay
-  await new Promise((resolve) => setTimeout(resolve, 500));
-
-  // Filter mock flights based on search parameters
-  return mockFlights.filter((flight) => {
+  try {
+    // Parse the departure date
     const departureDate = new Date(params.departureDate);
-    const flightDate = new Date(flight.departureTime);
+    
+    // Set start and end times for the day (UTC)
+    const startOfDay = new Date(departureDate);
+    startOfDay.setUTCHours(0, 0, 0, 0);
+    
+    const endOfDay = new Date(departureDate);
+    endOfDay.setUTCHours(23, 59, 59, 999);
 
-    const isSameDay =
-      departureDate.getDate() === flightDate.getDate() &&
-      departureDate.getMonth() === flightDate.getMonth() &&
-      departureDate.getFullYear() === flightDate.getFullYear();
+    // Query the database
+    const flights = await prisma.flight.findMany({
+      where: {
+        departureAirport: {
+          equals: params.origin.toUpperCase(),
+          mode: 'insensitive',
+        },
+        arrivalAirport: {
+          equals: params.destination.toUpperCase(),
+          mode: 'insensitive',
+        },
+        departureTime: {
+          gte: startOfDay,
+          lte: endOfDay,
+        },
+        availableSeats: {
+          gt: 0,
+        },
+      },
+      orderBy: {
+        departureTime: 'asc',
+      },
+    });
 
-    return (
-      flight.departureAirport.toUpperCase() ===
-        params.origin.toUpperCase() &&
-      flight.arrivalAirport.toUpperCase() ===
-        params.destination.toUpperCase() &&
-      isSameDay &&
-      flight.availableSeats > 0
-    );
-  });
+    // Transform Prisma Flight to Flight type (convert dates to ISO strings)
+    return flights.map((flight) => ({
+      id: flight.id,
+      flightNumber: flight.flightNumber,
+      departureAirport: flight.departureAirport,
+      arrivalAirport: flight.arrivalAirport,
+      departureTime: flight.departureTime.toISOString(),
+      arrivalTime: flight.arrivalTime.toISOString(),
+      airline: flight.airline,
+      stops: flight.stops,
+      availableSeats: flight.availableSeats,
+      price: flight.price,
+    }));
+  } catch (error) {
+    console.error('Error searching flights from database:', error);
+    // Fallback to empty array if database query fails
+    return [];
+  }
 }
 
 export async function getFlightById(flightId: string): Promise<Flight | null> {
-  await new Promise((resolve) => setTimeout(resolve, 300));
-  return mockFlights.find((flight) => flight.id === flightId) || null;
+  try {
+    const flight = await prisma.flight.findUnique({
+      where: { id: flightId },
+    });
+
+    if (!flight) {
+      return null;
+    }
+
+    return {
+      id: flight.id,
+      flightNumber: flight.flightNumber,
+      departureAirport: flight.departureAirport,
+      arrivalAirport: flight.arrivalAirport,
+      departureTime: flight.departureTime.toISOString(),
+      arrivalTime: flight.arrivalTime.toISOString(),
+      airline: flight.airline,
+      stops: flight.stops,
+      availableSeats: flight.availableSeats,
+      price: flight.price,
+    };
+  } catch (error) {
+    console.error('Error fetching flight by ID:', error);
+    return null;
+  }
 }
 
 export async function bookFlight(flightId: string, passengerCount: number) {
-  await new Promise((resolve) => setTimeout(resolve, 600));
+  try {
+    const flight = await prisma.flight.findUnique({
+      where: { id: flightId },
+    });
 
-  const flight = mockFlights.find((f) => f.id === flightId);
-  if (!flight || flight.availableSeats < passengerCount) {
-    throw new Error("No seats available");
+    if (!flight || flight.availableSeats < passengerCount) {
+      throw new Error("No seats available");
+    }
+
+    // Update available seats
+    await prisma.flight.update({
+      where: { id: flightId },
+      data: {
+        availableSeats: {
+          decrement: passengerCount,
+        },
+      },
+    });
+
+    return { success: true, confirmationCode: generateConfirmationCode() };
+  } catch (error) {
+    console.error('Error booking flight:', error);
+    throw error;
   }
-
-  flight.availableSeats -= passengerCount;
-  return { success: true, confirmationCode: generateConfirmationCode() };
 }
 
 function generateConfirmationCode(): string {
