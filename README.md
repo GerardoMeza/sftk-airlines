@@ -27,20 +27,20 @@ Un demo moderno de sistema de reserva de vuelos para la aerolínea SFTK Airlines
 #### 4. Confirmación de Compra
 - ✅ El sistema genera un número de confirmación único
 - ✅ Se muestra pantalla de confirmación con detalles del vuelo
-- ✅ El viaje queda almacenado y disponible para consulta posterior
+- ✅ El viaje queda almacenado en la BD y disponible para consulta posterior (API-backed)
 - ✅ Botón para descargar boleto
 
 ### User Story 2: Loyalty Account & Authentication
 
 #### 1. Loyalty Account
 - ✅ Botón "Loyalty Account" en el header
-- ✅ Modal de login con campos email y password
+- ✅ Modal de login/signup con campos email, password y datos personales
 - ✅ Validación de credenciales
-- ✅ Almacenamiento seguro de sesión
+- ✅ Almacenamiento seguro de sesión (localStorage + BD)
 - ✅ Toggle entre login y signup
 
 #### 2. Acceso a Reservas
-- ✅ MyTripsDrawer para ver reservas del usuario autenticado
+- ✅ MyTripsDrawer para ver reservas del usuario autenticado (fetches from API)
 - ✅ Muestra código de confirmación y estado
 - ✅ Botón para ver detalles completos
 - ✅ Sign Out para cerrar sesión
@@ -50,7 +50,23 @@ Un demo moderno de sistema de reserva de vuelos para la aerolínea SFTK Airlines
 - ✅ Selección de cantidad de maletas
 - ✅ Precio por maleta ($30)
 - ✅ Cálculo automático del total
-- ✅ Resumen de precio en BookingDetails
+- ✅ Resumen de precio en BookingDetails (persisted to BD)
+
+### User Story 3: Baggage Management (Add Baggage)
+
+#### 1. Acceso a equipaje
+- ✅ Accede al viaje desde My Trips o My Bookings
+- ✅ Selecciona opción "Add Baggage"
+
+#### 2. Configuración de equipaje
+- ✅ Elige cantidad: 1 o 2 bolsas
+- ✅ Precio visible: $30 por bolsa
+- ✅ Cálculo en tiempo real
+
+#### 3. Confirmación y persistencia
+- ✅ Botón "Confirm & Add" completa la transacción
+- ✅ Feedback visual (checkmark + confirmación)
+- ✅ Detalles se actualizan automáticamente en BD
 
 ## 🛠️ Stack Tecnológico
 
@@ -61,11 +77,12 @@ Un demo moderno de sistema de reserva de vuelos para la aerolínea SFTK Airlines
 - **Form Management**: React Hook Form
 - **Validación**: Zod
 - **ORM**: Prisma
-- **Base de Datos**: PostgreSQL (recomendado para Vercel)
+- **Base de Datos**: PostgreSQL (Neon, Vercel Postgres, Supabase)
 - **Icons**: Lucide React
 - **Utility Libraries**: date-fns, axios
 - **Linting**: ESLint
-- **Deployment**: Vercel
+- **Deployment**: Vercel (con CI/CD automático)
+- **State Management**: React Context (Auth) + SessionStorage (temporal flight selection)
 
 ## 📁 Estructura del Proyecto
 
@@ -209,36 +226,51 @@ npm run lint        # Ejecuta ESLint
 
 ## 🗄️ Modelos de Base de Datos
 
+### Schema Prisma Completo
+
+Todos los modelos usan relaciones con validación de integridad referencial.
+
 ### User
 - `id`: String (ID único)
-- `email`: String (Email del usuario)
+- `email`: String (Email del usuario, único)
+- `password`: String (Hasheada con SHA-256)
 - `firstName`: String
 - `lastName`: String
 - `phone`: String
 - `createdAt`: DateTime
 - `updatedAt`: DateTime
+- **Relaciones**: bookings (One-to-Many)
 
 ### Flight
 - `id`: String (ID único)
-- `flightNumber`: String
-- `departureAirport`: String
-- `arrivalAirport`: String
+- `flightNumber`: String (único)
+- `departureAirport`: String (formato "City (CODE)")
+- `arrivalAirport`: String (formato "City (CODE)")
 - `departureTime`: DateTime
 - `arrivalTime`: DateTime
+- `airline`: String
 - `stops`: Int
 - `availableSeats`: Int
 - `price`: Float
+- `createdAt`: DateTime
+- `updatedAt`: DateTime
+- **Relaciones**: bookings (One-to-Many)
 
 ### Booking
 - `id`: String (ID único)
-- `confirmationCode`: String
-- `userId`: String (FK)
-- `flightId`: String (FK)
+- `confirmationCode`: String (único, generado automáticamente)
+- `userId`: String (FK → User)
+- `flightId`: String (FK → Flight)
 - `passengerName`: String
 - `passengerEmail`: String
 - `passengerPhone`: String
-- `status`: String
+- `status`: String (default: "confirmed")
+- `baggageCount`: Int (default: 0)
+- `baggagePrice`: Float (default: 0)
 - `totalPrice`: Float
+- `createdAt`: DateTime
+- `updatedAt`: DateTime
+- **Relaciones**: user (Many-to-One), flight (Many-to-One)
 
 ## 🚀 Deployment en Vercel
 
@@ -250,10 +282,12 @@ npm run lint        # Ejecuta ESLint
 
 ## 🔐 Seguridad
 
-- Validación de inputs con Zod
-- Type-safe con TypeScript
-- Variables de entorno protegidas
-- API routes seguras
+- ✅ Validación de inputs con Zod (frontend + backend)
+- ✅ Type-safe con TypeScript en toda la aplicación
+- ✅ Variables de entorno protegidas (DATABASE_URL en .env.local)
+- ✅ API routes protegidas con validación de User-Id header
+- ✅ Contraseñas hasheadas con SHA-256
+- ✅ Transacciones atómicas en Prisma (seat decrement + booking creation)
 
 ## 📱 Responsividad
 
@@ -263,13 +297,25 @@ npm run lint        # Ejecuta ESLint
 
 ## 📝 Funcionalidades Futuras
 
-- NextAuth para autenticación
-- Integración con Stripe/PayPal para pagos
-- Historial de reservas persistente
-- Sistema de notificaciones por email
-- Búsqueda avanzada de vuelos
+### Priodad Alta
+- NextAuth.js para autenticación más robusta
+- Integración con Stripe/PayPal para pagos reales
 - Cambio y cancelación de reservas
+- Sistema de notificaciones por email (transaccionales)
+- Búsqueda avanzada de vuelos (filtros, ordenamiento)
+
+### Prioridad Media
+- PDF de boletos descargables
+- Sistema de reviews de vuelos
+- Programa de millas/puntos de lealtad
+- Búsqueda de vuelos de retorno (round trip)
+- Selección de asientos
+
+### Prioridad Baja
+- Upgrades de clase de vuelo
+- Seguros de viaje
+- Servicio de traslado (ground transport)
 
 ---
 
-**Hecho con ❤️ usando Next.js, React y TailwindCSS**
+**Hecho con ❤️ usando Next.js 14, React 18, TypeScript y Prisma**
