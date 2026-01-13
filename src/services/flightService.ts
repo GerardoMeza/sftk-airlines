@@ -16,14 +16,18 @@ export async function searchFlights(
     endOfDay.setUTCHours(23, 59, 59, 999);
 
     // Query the database
+    // Airport codes are stored as "City (CODE)" format, so we need to search for the code within the string
+    const originCode = params.origin.toUpperCase();
+    const destinationCode = params.destination.toUpperCase();
+    
     const flights = await prisma.flight.findMany({
       where: {
         departureAirport: {
-          equals: params.origin.toUpperCase(),
+          contains: `(${originCode})`,
           mode: 'insensitive',
         },
         arrivalAirport: {
-          equals: params.destination.toUpperCase(),
+          contains: `(${destinationCode})`,
           mode: 'insensitive',
         },
         departureTime: {
