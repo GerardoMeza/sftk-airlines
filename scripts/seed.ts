@@ -1,10 +1,8 @@
 import "dotenv/config";
-import { PrismaClient } from "../src/generated/prisma/client";
+import { PrismaClient } from "@prisma/client";
 import crypto from 'crypto';
 
-const prisma = new PrismaClient({
-  accelerateUrl: process.env.DATABASE_URL,
-} as any);
+const prisma = new PrismaClient();
 
 // Hash password using SHA-256
 function hashPassword(password: string): string {
