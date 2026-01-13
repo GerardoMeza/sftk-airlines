@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@/generated/prisma/client";
+import { PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient({
-  accelerateUrl: process.env.DATABASE_URL,
-} as any);
+const prisma = new PrismaClient();
 
 export async function PATCH(
   request: NextRequest,

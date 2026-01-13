@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@/generated/prisma/client";
+import { PrismaClient } from "@prisma/client";
 import crypto from "crypto";
 
-const prisma = new PrismaClient({
-  accelerateUrl: process.env.DATABASE_URL,
-} as any);
+const prisma = new PrismaClient();
 
 function hashPassword(password: string): string {
   return crypto.createHash("sha256").update(password).digest("hex");
