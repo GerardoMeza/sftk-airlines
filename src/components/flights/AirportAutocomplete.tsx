@@ -84,8 +84,8 @@ export function AirportAutocomplete({
   };
 
   return (
-    <div ref={containerRef} className="relative">
-      <label className="block text-xs font-semibold text-[#11172b]/80 mb-2 tracking-wide uppercase">
+    <div ref={containerRef} className="relative min-h-[92px]">
+      <label className="block text-xs font-bold text-[#11172b]/80 mb-2 tracking-wide uppercase">
         <MapPin className="inline w-3.5 h-3.5 mr-2" />
         {label}
       </label>
@@ -105,7 +105,7 @@ export function AirportAutocomplete({
       />
 
       {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
+        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-xl z-[9999] max-h-64 overflow-y-auto">
           {filteredAirports.length > 0 ? (
             <ul>
               {filteredAirports.map((airport) => (
@@ -135,7 +135,9 @@ export function AirportAutocomplete({
         </div>
       )}
 
-      {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+      <div className="min-h-[20px]">
+        {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+      </div>
     </div>
   );
 }

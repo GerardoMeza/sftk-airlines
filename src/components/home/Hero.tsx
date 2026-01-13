@@ -10,7 +10,7 @@ interface HeroProps {
 
 export function Hero({ onSearch, isLoading }: HeroProps) {
   return (
-    <section className="relative min-h-[50vh] md:min-h-[60vh] overflow-hidden bg-[#f7fbff]">
+    <section className="relative min-h-[50vh] md:min-h-[60vh] bg-[#f7fbff]" style={{ overflow: 'visible' }}>
       {/* Background image + overlay */}
       <div
         className="absolute inset-0 bg-cover bg-center"
@@ -28,9 +28,9 @@ export function Hero({ onSearch, isLoading }: HeroProps) {
       </div>
 
       {/* Search card anchored at bottom center */}
-      <div className="relative z-20 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="w-full md:absolute md:left-1/2 md:-translate-x-1/2 md:bottom-[-2.5rem] md:pb-0 pb-6 pt-6">
-          <div className=" bg-white/25 border border-white/40 shadow-[0_18px_50px_rgba(0,51,102,0.15)] rounded-2xl p-3 md:p-5">
+      <div className="relative z-20 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8" style={{ overflow: 'visible' }}>
+        <div className="w-full md:absolute md:left-1/2 md:-translate-x-1/2 md:bottom-[-2.5rem] md:pb-0 pb-6 pt-6" style={{ overflow: 'visible' }}>
+          <div className=" bg-white/25 border border-white/40 shadow-[0_18px_50px_rgba(0,51,102,0.15)] rounded-2xl p-3 md:p-5" style={{ overflow: 'visible' }}>
             <FlightSearch onSearch={onSearch} isLoading={isLoading} />
           </div>
         </div>

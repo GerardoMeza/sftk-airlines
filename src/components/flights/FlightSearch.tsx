@@ -43,13 +43,13 @@ export function FlightSearch({ onSearch, isLoading = false }: FlightSearchProps)
   };
 
   return (
-    <div className="bg-white/10 backdrop-blur-sm border border-white/60 rounded-xl shadow-[0_10px_30px_rgba(17,23,43,0.12)] p-5 md:p-7">
+    <div className="bg-white/70 backdrop-blur-sm border border-white/60 rounded-xl shadow-[0_10px_30px_rgba(17,23,43,0.12)] p-5 md:p-7" style={{ overflow: 'visible' }}>
       <h2 className="text-xl md:text-2xl font-bold text-[#1f2f5c] mb-4 uppercase tracking-wide">
         Search Flights
       </h2>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 md:space-y-0">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-2 md:items-end">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-2 md:items-start" style={{ overflow: 'visible' }}>
           <Controller
             name="origin"
             control={control}
@@ -76,8 +76,8 @@ export function FlightSearch({ onSearch, isLoading = false }: FlightSearchProps)
             )}
           />
 
-          <div>
-            <label className="block text-xs font-semibold text-[#11172b]/80 mb-2 tracking-wide uppercase">
+          <div className="min-h-[92px]">
+            <label className="block text-xs font-bold text-[#11172b]/80 mb-2 tracking-wide uppercase">
               <Calendar className="inline w-3.5 h-3.5 mr-2" />
               Departure
             </label>
@@ -99,11 +99,11 @@ export function FlightSearch({ onSearch, isLoading = false }: FlightSearchProps)
             )}
           </div>
 
-          <div className="md:col-span-1 flex md:justify-end">
+          <div className="md:col-span-1 flex md:justify-end md:pt-[26px]">
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full md:w-auto px-5 md:px-6 h-[52px] bg-[#8B1E3F] hover:bg-[#731836] text-white font-semibold rounded-md transition disabled:opacity-50 flex items-center justify-center gap-2"
+              className="w-full md:w-auto px-5 md:px-6 h-[52px] bg-[#8B1E3F] hover:bg-[#731836] text-white font-bold rounded-md transition disabled:opacity-50 flex items-center justify-center gap-2"
             >
               <Search className="w-5 h-5" />
               <span className="text-sm md:text-base font-semibold">
