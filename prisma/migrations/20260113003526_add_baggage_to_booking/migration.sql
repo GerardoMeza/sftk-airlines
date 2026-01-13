@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Booking" ADD COLUMN     "baggageCount" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN     "baggagePrice" DOUBLE PRECISION NOT NULL DEFAULT 0;
