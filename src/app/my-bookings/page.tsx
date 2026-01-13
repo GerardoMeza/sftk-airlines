@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Header } from "@/components/Header";
 import { Booking, Flight } from "@/types";
 import Link from "next/link";
@@ -11,33 +11,81 @@ import {
   calculateFlightDuration,
   formatDate,
 } from "@/utils/format";
-
-// Mock bookings for demo
-const mockBookings: (Booking & { flight: Flight })[] = [];
-
-const getInitialBookings = (): (Booking & { flight: Flight })[] => {
-  if (typeof window === "undefined") return [];
-
-  const lastBooking = sessionStorage.getItem("lastBooking");
-  const selectedFlight = sessionStorage.getItem("selectedFlight");
-
-  if (lastBooking && selectedFlight) {
-    const booking = JSON.parse(lastBooking);
-    const flight = JSON.parse(selectedFlight);
-    return [
-      {
-        ...booking,
-        flight,
-      },
-    ];
-  }
-  return mockBookings;
-};
+import { useAuth } from "@/context/AuthContext";
 
 export default function MyBookingsPage() {
-  const [bookings] = useState<(Booking & { flight: Flight })[]>(
-    getInitialBookings()
+  const { user } = useAuth();
+  const [bookings, setBookings] = useState<(Booking & { flight: Flight })[]>(
+    []
   );
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    type ApiBooking = {
+      id: string;
+      confirmationCode: string;
+      flightId: string;
+      passengerName: string;
+      passengerEmail: string;
+      passengerPhone: string;
+      totalPrice: number;
+      baggageCount: number;
+      baggagePrice: number;
+      flightNumber: string;
+      departureAirport: string;
+      arrivalAirport: string;
+      departureTime: string; // ISO
+      arrivalTime: string; // ISO
+      airline: string;
+      createdAt: string; // ISO
+    };
+    const fetchBookings = async () => {
+      if (!user) return;
+      setIsLoading(true);
+      try {
+        const res = await fetch("/api/bookings/my-bookings", {
+          headers: { "User-Id": user.id },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          // data is an array with flattened flight fields; map to expected shape
+          const normalized: (Booking & { flight: Flight })[] = (data as ApiBooking[]).map(
+            (b: ApiBooking) => ({
+              id: b.id,
+              confirmationCode: b.confirmationCode,
+              userId: "", // not used in UI here
+              flightId: b.flightId,
+              passengerName: b.passengerName,
+              passengerEmail: b.passengerEmail,
+              passengerPhone: b.passengerPhone,
+              status: "confirmed",
+              totalPrice: b.totalPrice,
+              createdAt: b.createdAt,
+              flight: {
+                id: b.flightId,
+                flightNumber: b.flightNumber,
+                departureAirport: b.departureAirport,
+                arrivalAirport: b.arrivalAirport,
+                departureTime: b.departureTime,
+                arrivalTime: b.arrivalTime,
+                airline: b.airline,
+                stops: 0,
+                availableSeats: 0,
+                price: b.totalPrice,
+              },
+            })
+          );
+          setBookings(normalized);
+        }
+      } catch (e) {
+        console.error("Failed to load bookings", e);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchBookings();
+  }, [user]);
 
   return (
     <>
@@ -57,7 +105,23 @@ export default function MyBookingsPage() {
           </div>
 
           {/* Bookings List */}
-          {bookings.length === 0 ? (
+          {!user ? (
+            <div className="bg-white rounded-lg shadow-lg p-12 text-center">
+              <Clock className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-600 text-lg mb-4">Please sign in to view your bookings</p>
+              <Link
+                href="/"
+                className="inline-block bg-[#1f2f5c] hover:brightness-125 text-white font-semibold py-2 px-6 rounded-md transition"
+              >
+                Go to Home
+              </Link>
+            </div>
+          ) : isLoading ? (
+            <div className="bg-white rounded-lg shadow-lg p-12 text-center">
+              <Clock className="w-16 h-16 text-gray-300 mx-auto mb-4 animate-pulse" />
+              <p className="text-gray-600 text-lg mb-4">Loading your bookings…</p>
+            </div>
+          ) : bookings.length === 0 ? (
             <div className="bg-white rounded-lg shadow-lg p-12 text-center">
               <Clock className="w-16 h-16 text-gray-300 mx-auto mb-4" />
               <p className="text-gray-600 text-lg mb-4">You have no bookings yet</p>

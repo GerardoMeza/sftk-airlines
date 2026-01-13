@@ -8,6 +8,7 @@ import { BookingConfirmation } from "@/components/booking/BookingConfirmation";
 import { Flight, PassengerInfo, Booking } from "@/types";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 export default function BookingPage() {
   const [flight, setFlight] = useState<Flight | null>(null);
@@ -16,6 +17,7 @@ export default function BookingPage() {
     "flight"
   );
   const [isLoading, setIsLoading] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
     // Get selected flight from sessionStorage
@@ -33,7 +35,10 @@ export default function BookingPage() {
     try {
       const response = await fetch("/api/bookings/create", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "User-Id": user?.id || "",
+        },
         body: JSON.stringify({
           flight,
           passengerInfo,
@@ -46,6 +51,10 @@ export default function BookingPage() {
         setStep("confirmation");
         // Store booking in sessionStorage
         sessionStorage.setItem("lastBooking", JSON.stringify(bookingData));
+      } else {
+        const err = await response.json().catch(() => ({ error: "" }));
+        const message = err?.error || "Error creating booking. Please try again.";
+        alert(message);
       }
     } catch (error) {
       console.error("Error creating booking:", error);
