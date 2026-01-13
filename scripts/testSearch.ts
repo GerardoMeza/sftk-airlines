@@ -9,6 +9,7 @@ async function testSearch() {
       origin: "LAX",
       destination: "MIA",
       departureDate: "2026-01-15",
+      passengers: 1,
     });
 
     console.log(`✅ Found ${results.length} flights:\n`);
